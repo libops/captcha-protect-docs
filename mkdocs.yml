@@ -4,7 +4,7 @@ repo_url: https://github.com/libops/captcha-protect-docs
 site_url: !ENV [ SITE_URL, "https://captcha-protect.libops.io/" ]
 docs_dir: .
 exclude_docs: |
-  /README.md
+  README.md
 edit_uri: edit/main/
 
 theme:
