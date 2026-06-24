@@ -21,10 +21,8 @@ flowchart TD
     GOOD_BOT -- Yes --> CANONICAL_URL_BOT{Are there URL parameters?}
     CANONICAL_URL_BOT -- Yes --> PROTECTED_ROUTE{Is this route prefix in protectRoutes?}
     CANONICAL_URL_BOT -- No --> Continue(Go to original destination)
-    PROTECTED_ROUTE -- Yes --> RATE_LIMIT{Has this IP exceeded rateLimit?}
+    PROTECTED_ROUTE -- Yes --> REDIRECT(Redirect to /challenge)
     PROTECTED_ROUTE -- No --> Continue(Go to original destination)
-    RATE_LIMIT -- Yes --> REDIRECT(Redirect to /challenge)
-    RATE_LIMIT -- No --> Continue(Go to original destination)
     REDIRECT --> CIRCUIT{Is circuit breaker open?}
     CIRCUIT -- Yes --> POJ_CHALLENGE{Proof-of-Javascript challenge}
     CIRCUIT -- No --> CAPTCHA_CHALLENGE{turnstile/recaptcha/hcaptcha challenge}

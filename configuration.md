@@ -15,17 +15,12 @@ These examples configure the same `captcha-protect` middleware and attach it to 
 !!! warning
     `secretKey` values in labels or tags may be visible to users who can inspect Docker, ECS, Consul, Nomad, or similar provider metadata. Use structured files or secret-aware deployment tooling when that metadata is not tightly controlled.
 
-!!! note "Major release changes"
-    `ipv4subnetMask`, `ipv6subnetMask`, and `enableStateReconciliation` have been removed. Rate limiting is keyed by exact client IP. For multiple protected services, use [multi-layer routing](multiple-services.md) instead of attaching the plugin to every router.
+!!! note "Breaking changes v1 to v2"
+    `ipv4subnetMask`, `ipv6subnetMask`, and `rateLimit` have been removed. Given the distributed nature of bots, these config values have become additional config and logic that adds no real value. Most crawlers at this point are issuing a small amount of requests per IP across a wide range of subnets.
 
-Since these config values are specified:
+    `enableStateReconciliation` and all state reconciliation code have been removed. `persistentStateFile` is now restart persistence only, not multi-instance coordination. For multiple protected services, use [multi-layer routing](multiple-services.md) instead of attaching the plugin to every router.
 
-```yaml
-rateLimit: 0
-window: 864000
-```
-
-Any non-exempt client IP is immediately challenged on protected routes. Once the client passes a challenge, that IP is not challenged again for 10 days. This is the recommended default given the wide network range of abusive crawlers.
+The examples use `window: 864000`. Any non-exempt client IP is immediately challenged on protected routes. Once the client passes a challenge, that IP is not challenged again for 10 days.
 
 === "Structured (YAML)"
 
@@ -50,7 +45,6 @@ Any non-exempt client IP is immediately challenged on protected routes. Once the
         captcha-protect:
           plugin:
             captcha-protect:
-              rateLimit: 0
               window: 864000
               protectRoutes:
                 - "/"
@@ -91,7 +85,6 @@ Any non-exempt client IP is immediately challenged on protected routes. Once the
         url = "http://nginx:80"
 
     [http.middlewares.captcha-protect.plugin.captcha-protect]
-      rateLimit = 0
       window = 864000
       protectRoutes = ["/"]
       captchaProvider = "turnstile"
@@ -131,7 +124,6 @@ Any non-exempt client IP is immediately challenged on protected routes. Once the
           - "traefik.http.routers.nginx.rule=Host(`${DOMAIN}`)"
           - "traefik.http.routers.nginx.middlewares=captcha-protect@docker"
           - "traefik.http.services.nginx.loadbalancer.server.port=80"
-          - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.rateLimit=0"
           - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.window=864000"
           - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.protectRoutes=/"
           - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.captchaProvider=turnstile"
@@ -159,7 +151,6 @@ Any non-exempt client IP is immediately challenged on protected routes. Once the
         "traefik.http.routers.nginx.rule=Host(`example.com`)",
         "traefik.http.routers.nginx.middlewares=captcha-protect",
         "traefik.http.services.nginx.loadbalancer.server.port=80",
-        "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.rateLimit=0",
         "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.window=864000",
         "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.protectRoutes=/",
         "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.captchaProvider=turnstile",
@@ -214,29 +205,24 @@ Any non-exempt client IP is immediately challenged on protected routes. Once the
 `protectParameters`
 :   Type: `string`; default: `"false"`.
 
-    Forces rate limiting even for good bots if URL parameters are present. This is useful for faceted search and other expensive query combinations.
+    Forces challenges even for good bots if URL parameters are present. This is useful for faceted search and other expensive query combinations.
 
 `protectFileExtensions`
 :   Type: `[]string`; default: `""`.
 
-    File extensions to protect. Protected routes only protect HTML by default, which prevents CSS, JavaScript, images, and similar assets from tripping the rate limit.
+    File extensions to protect. Protected routes only protect HTML by default, which prevents CSS, JavaScript, images, and similar assets from triggering challenges.
 
 `protectHttpMethods`
 :   Type: `[]string`; default: `"GET,HEAD"`.
 
     HTTP methods to protect.
 
-### Rate Limiting And Identity
-
-`rateLimit`
-:   Type: `uint`; default: `0`.
-
-    Maximum protected requests allowed from one client IP during `window` before a challenge is triggered. `0` means the first protected request is challenged unless the client is exempt, already verified, or allowed as a good bot.
+### Identity And Cache Window
 
 `window`
 :   Type: `int`; default: `86400`.
 
-    Duration, in seconds, for counting protected requests and retaining rate, verified-client, and bot cache entries. Longer windows retain more entries and can increase memory use.
+    Duration, in seconds, for retaining verified-client and bot cache entries. Longer windows retain more entries and can increase memory use.
 
 `ipForwardedHeader`
 :   Type: `string`; default: `""`.
@@ -258,17 +244,19 @@ Any non-exempt client IP is immediately challenged on protected routes. Once the
 
     Case-insensitive user-agent substrings to never challenge. For example, `YandexBot` exempts user agents containing `YandexBot`.
 
-### Bot Bypasses
+### SEO
 
 `goodBots`
 :   Type: `[]string`; default: see [Good bots](good-bots.md).
 
-    Second-level domains for bots that are never challenged or rate-limited.
+    Second-level domains for bots that are never challenged.
 
 `enableGooglebotIPCheck`
 :   Type: `string`; default: `"false"`.
 
     Treat IPs in Google's published bot IP ranges as good bots.
+
+### Monitoring
 
 `enableUptimeRobotBypass`
 :   Type: `string`; default: `"false"`.
@@ -280,7 +268,7 @@ Any non-exempt client IP is immediately challenged on protected routes. Once the
 `challengeURL`
 :   Type: `string`; default: `"/challenge"`.
 
-    URL where challenges are served. This overrides existing routes if there is a conflict. Setting it to blank presents the challenge on the same page that tripped the rate limit.
+    URL where challenges are served. This overrides existing routes if there is a conflict. Setting it to blank presents the challenge on the same page that triggered protection.
 
 `challengeTmpl`
 :   Type: `string`; default: `"challenge.tmpl.html"`.
@@ -309,12 +297,12 @@ Any non-exempt client IP is immediately challenged on protected routes. Once the
 `persistentStateFile`
 :   Type: `string`; default: `""`.
 
-    File path to persist rate limiter and verified challenge state across Traefik restarts. When unset, no state load/save goroutine is started. Dirty local state is saved about every 60 seconds plus 0-2 seconds of jitter. Derived bot lookup cache entries are not persisted. In Docker, mount this file from the host.
+    File path to persist verified challenge state across Traefik restarts. When unset, no state load/save goroutine is started. Dirty local state is saved about every 60 seconds plus 0-2 seconds of jitter. Derived bot lookup cache entries are not persisted. In Docker, mount this file from the host.
 
 `enableStatsPage`
 :   Type: `string`; default: `"false"`.
 
-    Allows `exemptIps` to access `/captcha-protect/stats` for runtime rate and verification state.
+    Allows `exemptIps` to access `/captcha-protect/stats` for runtime verification state.
 
 `logLevel`
 :   Type: `string`; default: `INFO`.

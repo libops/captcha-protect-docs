@@ -12,9 +12,32 @@ Copy the default [`challenge.tmpl.html`](https://github.com/libops/captcha-prote
 
 Point the middleware to your overridden template:
 
-```yaml
-            traefik.http.middlewares.captcha-protect.plugin.captcha-protect.challengeTmpl: "/challenge.tmpl.html"
-```
+=== "Structured (YAML)"
+
+    ```yaml
+    challengeTmpl: /challenge.tmpl.html
+    ```
+
+=== "Structured (TOML)"
+
+    ```toml
+    challengeTmpl = "/challenge.tmpl.html"
+    ```
+
+=== "Labels"
+
+    ```yaml
+    labels:
+      - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.challengeTmpl=/challenge.tmpl.html"
+    ```
+
+=== "Tags"
+
+    ```json
+    [
+      "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.challengeTmpl=/challenge.tmpl.html"
+    ]
+    ```
 
 When you override the challenge template, the process usually looks like this:
 

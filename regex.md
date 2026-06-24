@@ -4,9 +4,32 @@ When possible, keep regex disabled. Prefix and suffix matching are much cheaper 
 
 When needed, regex matching can be enabled with:
 
-```yaml
-mode: regex
-```
+=== "Structured (YAML)"
+
+    ```yaml
+    mode: regex
+    ```
+
+=== "Structured (TOML)"
+
+    ```toml
+    mode = "regex"
+    ```
+
+=== "Labels"
+
+    ```yaml
+    labels:
+      - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.mode=regex"
+    ```
+
+=== "Tags"
+
+    ```json
+    [
+      "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.mode=regex"
+    ]
+    ```
 
 The benchmark below illustrates the difference between a simple prefix check and a compiled regex match:
 

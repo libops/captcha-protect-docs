@@ -11,7 +11,7 @@ flowchart LR
     SiteB --> ServiceB[app service]
 ```
 
-This is the preferred multi-service topology because the plugin runs once at the parent layer. The parent instance owns the rate, verification, and bot caches for all child routers, so memory is sized for one shared middleware instance instead of one instance per service. A 256 MB Traefik memory limit is a practical starting point for this layout; monitor memory under representative traffic and tune `window` if cache retention is too high.
+This is the preferred multi-service topology because the plugin runs once at the parent layer. The parent instance owns the verification and bot caches for all child routers, so memory is sized for one shared middleware instance instead of one instance per service. A 256 MB Traefik memory limit is a practical starting point for this layout; monitor memory under representative traffic and tune `window` if cache retention is too high.
 
 !!! note
     Multi-layer routing requires Traefik `v3.6` or later. Parent routers carry `entryPoints`, TLS, and shared middleware. Child routers use `parentRefs` and define the final service.
@@ -58,7 +58,6 @@ This is the preferred multi-service topology because the plugin runs once at the
         captcha-protect:
           plugin:
             captcha-protect:
-              rateLimit: 0
               window: 864000
               protectRoutes:
                 - "/"
@@ -101,7 +100,6 @@ This is the preferred multi-service topology because the plugin runs once at the
         url = "http://app:80"
 
     [http.middlewares.captcha-protect.plugin.captcha-protect]
-      rateLimit = 0
       window = 864000
       protectRoutes = ["/"]
       captchaProvider = "turnstile"
@@ -130,10 +128,10 @@ This is the preferred multi-service topology because the plugin runs once at the
 
 ## Operational Notes
 
-Do not attach `captcha-protect` separately to every router for multi-service protection. Traefik plugin middleware state is instance-local, so per-router attachment duplicates rate, verification, and bot caches. The parent-router pattern keeps those caches in one middleware instance for the protected service group.
+Do not attach `captcha-protect` separately to every router for multi-service protection. Traefik plugin middleware state is instance-local, so per-router attachment duplicates verification and bot caches. The parent-router pattern keeps those caches in one middleware instance for the protected service group.
 
-`persistentStateFile` only persists rate and verified challenge state across Traefik restarts. It is not a shared cache backend and should not be used to coordinate multiple plugin instances. If you run multiple Traefik replicas, each replica still has its own in-memory cache.
+`persistentStateFile` only persists verified challenge state across Traefik restarts. It is not a shared cache backend and should not be used to coordinate multiple plugin instances. If you run multiple Traefik replicas, each replica still has its own in-memory cache.
 
-The cache implementation is expiration-based; despite its `lru` import alias in the source, it does not enforce a least-recently-used entry limit, maximum entry count, or memory limit. Enough distinct client IPs within the configured `window` can consume substantial memory. `rateLimit` controls when an IP is challenged; it does not cap the number of cached IPs.
+The cache implementation is expiration-based; despite its `lru` import alias in the source, it does not enforce a least-recently-used entry limit, maximum entry count, or memory limit. Enough distinct verified clients and bot lookups within the configured `window` can consume substantial memory.
 
-The repository CI includes a dedicated `integration-test-multilayer-routing` job that runs the documented parent/child structure through Traefik's file provider. That test verifies that requests through one child router affect the same parent `captcha-protect` rate state used before routing to another child router.
+The repository CI includes a dedicated `integration-test-multilayer-routing` job that runs the documented parent/child structure through Traefik's file provider. That test verifies that requests to both child routers pass through the parent `captcha-protect` middleware.

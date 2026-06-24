@@ -1,14 +1,46 @@
 # Monitoring
 
-If you set `enableStatsPage` to `"true"`, `exemptIps` can access `/captcha-protect/stats` to monitor the rate limiter. The top-level `rate` key lists client IPs that have active rate entries based on request patterns and your `captcha-protect` configuration values.
+`enableStatsPage` exposes `/captcha-protect/stats` to clients in `exemptIps`. The response includes verified challenge state and approximate cache memory usage.
 
-If you use a computer within `exemptIps` and have the command line tools `curl` and `jq`, this command lists the top 25 IPs by current request count:
+=== "Structured (YAML)"
+
+    ```yaml
+    enableStatsPage: "true"
+    exemptIps:
+      - "203.0.113.10/32"
+    ```
+
+=== "Structured (TOML)"
+
+    ```toml
+    enableStatsPage = "true"
+    exemptIps = ["203.0.113.10/32"]
+    ```
+
+=== "Labels"
+
+    ```yaml
+    labels:
+      - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.enableStatsPage=true"
+      - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.exemptIps=203.0.113.10/32"
+    ```
+
+=== "Tags"
+
+    ```json
+    [
+      "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.enableStatsPage=true",
+      "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.exemptIps=203.0.113.10/32"
+    ]
+    ```
+
+If you use a computer within `exemptIps` and have the command line tools `curl` and `jq`, this command lists verified IPs:
 
 ```bash
-curl -s https://example.com/captcha-protect/stats | jq -r '.rate | to_entries | sort_by(.value.value) | .[] | "\(.key): \(.value.value)"' | tail -25
+curl -s https://example.com/captcha-protect/stats | jq -r '.verified | keys[]'
 ```
 
-The rate limiter and verified challenge portions of this JSON state data are also found in the `state.json` file configured through the `persistentStateFile` setting and volume definition in your deployment.
+The verified challenge portion of this JSON state data is also found in the `state.json` file configured through the `persistentStateFile` setting and volume definition in your deployment.
 
 Dirty state is saved roughly every 60 seconds plus 0-2 seconds of jitter. If `persistentStateFile` is unset, state persistence is disabled.
 

@@ -19,10 +19,36 @@ When enabled, it:
 
 The circuit breaker is enabled by setting both `periodSeconds` and `failureThreshold`:
 
-```yaml
-periodSeconds: 30
-failureThreshold: 3
-```
+=== "Structured (YAML)"
+
+    ```yaml
+    periodSeconds: 30
+    failureThreshold: 3
+    ```
+
+=== "Structured (TOML)"
+
+    ```toml
+    periodSeconds = 30
+    failureThreshold = 3
+    ```
+
+=== "Labels"
+
+    ```yaml
+    labels:
+      - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.periodSeconds=30"
+      - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.failureThreshold=3"
+    ```
+
+=== "Tags"
+
+    ```json
+    [
+      "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.periodSeconds=30",
+      "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.failureThreshold=3"
+    ]
+    ```
 
 To disable it, set both `periodSeconds: 0` and `failureThreshold: 0`, which is the default configuration.
 
