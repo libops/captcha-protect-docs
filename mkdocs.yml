@@ -1,0 +1,76 @@
+site_name: Captcha Protect
+site_description: Traefik middleware that challenges protected client traffic with CAPTCHA
+repo_url: https://github.com/libops/captcha-protect-docs
+site_url: !ENV [ SITE_URL, "https://captcha-protect.libops.io/" ]
+docs_dir: .
+exclude_docs: |
+  /README.md
+edit_uri: edit/main/
+
+theme:
+  name: material
+  features:
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.top
+    - content.action.edit
+    - content.action.view
+    - content.code.copy
+    - content.code.select
+    - search.highlight
+  palette:
+    primary: indigo
+    accent: blue
+
+plugins:
+  - search
+  - tags
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink:
+      normalize_issue_symbols: true
+      repo_url_shorthand: true
+      user: libops
+      repo: captcha-protect
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format ""
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+extra_css:
+  - css/custom.css
+
+extra_javascript:
+  - js/mermaid-init.mjs
+
+nav:
+  - Home: index.md
+  - Configuration: configuration.md
+  - Protecting multiple services: multiple-services.md
+  - Circuit breaker: circuit-breaker.md
+  - Good bots: good-bots.md
+  - Challenge template: challenge-template.md
+  - Monitoring: monitoring.md
+  - Troubleshooting: troubleshooting.md
+  - Regex matching: regex.md
+  - Similar projects: similar-projects.md
+  - Attribution: attribution.md
