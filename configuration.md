@@ -9,7 +9,7 @@ These examples configure the same `captcha-protect` middleware and attach it to 
 
     ```bash
     --experimental.plugins.captcha-protect.modulename=github.com/libops/captcha-protect
-    --experimental.plugins.captcha-protect.version=v2.0.0
+    --experimental.plugins.captcha-protect.version=v2.0.1
     ```
 
 !!! warning
