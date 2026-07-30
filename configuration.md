@@ -9,13 +9,16 @@ These examples configure the same `captcha-protect` middleware and attach it to 
 
     ```bash
     --experimental.plugins.captcha-protect.modulename=github.com/libops/captcha-protect
-    --experimental.plugins.captcha-protect.version=v2.0.1
+    --experimental.plugins.captcha-protect.version=v1.14.0
     ```
+
+!!! warning "Unsupported v2 tags"
+    `v2.0.0`, `v2.0.1`, and `v2.0.2` were withdrawn because Traefik cannot load them. Use `v1.14.0` or a newer v1 release, and do not pin or recreate those v2 tags.
 
 !!! warning
     `secretKey` values in labels or tags may be visible to users who can inspect Docker, ECS, Consul, Nomad, or similar provider metadata. Use structured files or secret-aware deployment tooling when that metadata is not tightly controlled.
 
-!!! note "Breaking changes v1 to v2"
+!!! note "Breaking changes in v1.14.0"
     `ipv4subnetMask`, `ipv6subnetMask`, and `rateLimit` have been removed. Given the distributed nature of bots, these config values have become additional config and logic that adds no real value. Most crawlers at this point are issuing a small amount of requests per IP across a wide range of subnets.
 
     `enableStateReconciliation` and all state reconciliation code have been removed. `persistentStateFile` is now restart persistence only, not multi-instance coordination. For multiple protected services, use [multi-layer routing](multiple-services.md) instead of attaching the plugin to every router.
