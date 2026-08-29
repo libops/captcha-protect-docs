@@ -67,8 +67,8 @@ This is the preferred multi-service topology because the plugin runs once at the
               goodBots:
                 - apple.com
                 - archive.org
-                - commoncrawl.org
                 - duckduckgo.com
+              enableCommonCrawlIPCheck: "true"
               persistentStateFile: /tmp/captcha-protect/state.json
     ```
 
@@ -108,9 +108,9 @@ This is the preferred multi-service topology because the plugin runs once at the
       goodBots = [
         "apple.com",
         "archive.org",
-        "commoncrawl.org",
         "duckduckgo.com",
       ]
+      enableCommonCrawlIPCheck = "true"
       persistentStateFile = "/tmp/captcha-protect/state.json"
     ```
 

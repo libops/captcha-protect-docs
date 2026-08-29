@@ -57,7 +57,6 @@ The examples use `window: 864000`. Any non-exempt client IP is immediately chall
               goodBots:
                 - apple.com
                 - archive.org
-                - commoncrawl.org
                 - duckduckgo.com
                 - facebook.com
                 - instagram.com
@@ -68,6 +67,7 @@ The examples use `window: 864000`. Any non-exempt client IP is immediately chall
                 - twitter.com
                 - x.com
               persistentStateFile: /tmp/captcha-protect/state.json
+              enableCommonCrawlIPCheck: "true"
               enableGooglebotIPCheck: "true"
               enableUptimeRobotBypass: "false"
               periodSeconds: 30
@@ -96,7 +96,6 @@ The examples use `window: 864000`. Any non-exempt client IP is immediately chall
       goodBots = [
         "apple.com",
         "archive.org",
-        "commoncrawl.org",
         "duckduckgo.com",
         "facebook.com",
         "instagram.com",
@@ -108,6 +107,7 @@ The examples use `window: 864000`. Any non-exempt client IP is immediately chall
         "x.com",
       ]
       persistentStateFile = "/tmp/captcha-protect/state.json"
+      enableCommonCrawlIPCheck = "true"
       enableGooglebotIPCheck = "true"
       enableUptimeRobotBypass = "false"
       periodSeconds = 30
@@ -132,8 +132,9 @@ The examples use `window: 864000`. Any non-exempt client IP is immediately chall
           - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.captchaProvider=turnstile"
           - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.siteKey=${TURNSTILE_SITE_KEY}"
           - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.secretKey=${TURNSTILE_SECRET_KEY}"
-          - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.goodBots=apple.com,archive.org,commoncrawl.org,duckduckgo.com,facebook.com,instagram.com,kagibot.org,linkedin.com,msn.com,openalex.org,twitter.com,x.com"
+          - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.goodBots=apple.com,archive.org,duckduckgo.com,facebook.com,instagram.com,kagibot.org,linkedin.com,msn.com,openalex.org,twitter.com,x.com"
           - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.persistentStateFile=/tmp/captcha-protect/state.json"
+          - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.enableCommonCrawlIPCheck=true"
           - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.enableGooglebotIPCheck=true"
           - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.enableUptimeRobotBypass=false"
           - "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.periodSeconds=30"
@@ -159,8 +160,9 @@ The examples use `window: 864000`. Any non-exempt client IP is immediately chall
         "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.captchaProvider=turnstile",
         "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.siteKey=<TURNSTILE_SITE_KEY>",
         "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.secretKey=<TURNSTILE_SECRET_KEY>",
-        "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.goodBots=apple.com,archive.org,commoncrawl.org,duckduckgo.com,facebook.com,instagram.com,kagibot.org,linkedin.com,msn.com,openalex.org,twitter.com,x.com",
+        "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.goodBots=apple.com,archive.org,duckduckgo.com,facebook.com,instagram.com,kagibot.org,linkedin.com,msn.com,openalex.org,twitter.com,x.com",
         "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.persistentStateFile=/tmp/captcha-protect/state.json",
+        "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.enableCommonCrawlIPCheck=true",
         "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.enableGooglebotIPCheck=true",
         "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.enableUptimeRobotBypass=false",
         "traefik.http.middlewares.captcha-protect.plugin.captcha-protect.periodSeconds=30",
@@ -208,7 +210,7 @@ The examples use `window: 864000`. Any non-exempt client IP is immediately chall
 `protectParameters`
 :   Type: `string`; default: `"false"`.
 
-    Forces challenges even for good bots if URL parameters are present. This is useful for faceted search and other expensive query combinations.
+    Forces challenges for `goodBots`, Google crawler IPs, and Common Crawl IPs when URL parameters are present. This is useful for faceted search and other expensive query combinations. It does not override `enableUptimeRobotBypass`.
 
 `protectFileExtensions`
 :   Type: `[]string`; default: `""`.
@@ -250,21 +252,26 @@ The examples use `window: 864000`. Any non-exempt client IP is immediately chall
 ### SEO
 
 `goodBots`
-:   Type: `[]string`; default: see [Good bots](good-bots.md).
+:   Type: `[]string`; default: `""`.
 
-    Second-level domains for bots that are never challenged.
+    Second-level domains for bots that are never challenged unless `protectParameters` applies. See [Good bots](good-bots.md) for a recommended list.
+
+`enableCommonCrawlIPCheck`
+:   Type: `string`; default: `"true"`.
+
+    Treat IPs in Common Crawl's published CCBot ranges as good bots. Captcha Protect fetches `https://index.commoncrawl.org/ccbot.json` at startup and refreshes it every 24 hours. Each published IPv4 address must reverse-resolve to `commoncrawl.org` and resolve forward to the same address; addresses that fail verification are omitted. Published IPv6 ranges are loaded as supplied. `protectParameters` still applies.
 
 `enableGooglebotIPCheck`
 :   Type: `string`; default: `"false"`.
 
-    Treat IPs in Google's published bot IP ranges as good bots.
+    Treat IPs in Google's published bot IP ranges as good bots. `protectParameters` still applies.
 
 ### Monitoring
 
 `enableUptimeRobotBypass`
 :   Type: `string`; default: `"false"`.
 
-    Bypass challenges for IP ranges published by UptimeRobot. The ranges are refreshed every 24 hours.
+    Bypass challenges for IP ranges published by UptimeRobot. The ranges are refreshed every 24 hours. This monitoring bypass also applies when `protectParameters` is `"true"` and the request has URL parameters.
 
 ### Challenge Page
 
