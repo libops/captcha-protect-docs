@@ -217,6 +217,11 @@ The examples use `window: 864000`. Any non-exempt client IP is immediately chall
 
     File extensions to protect. Protected routes only protect HTML by default, which prevents CSS, JavaScript, images, and similar assets from triggering challenges.
 
+`protectAllExtensions`
+:   Type: `string`; default: `"false"`.
+
+    Protect matched routes regardless of file extension. Set this to `"true"` when routes contain dotted values, such as content IDs, that would otherwise be treated as static assets. This overrides `protectFileExtensions` and can cause matched CSS, JavaScript, images, and other assets to trigger challenges.
+
 `protectHttpMethods`
 :   Type: `[]string`; default: `"GET,HEAD"`.
 
